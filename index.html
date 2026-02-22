@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Quotes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --cream:     #f5f0e8;
+      --parchment: #ede6d6;
+      --ink:       #1a1610;
+      --ink-mid:   #4a4035;
+      --ink-light: #8a7d6a;
+      --accent:    #8b2c0e;
+      --accent-lt: #bf4a22;
+      --rule:      #c8bca8;
+      --success-bg: #1a2e1a;
+      --success-fg: #7ec87e;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'Lora', Georgia, serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Grain texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.04;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* Decorative top rule */
+    .top-rule {
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--accent) 20%, var(--accent) 80%, transparent);
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 24px 64px;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      padding: 52px 0 40px;
+      max-width: 680px;
+      width: 100%;
+    }
+
+    .wordmark {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(2.6rem, 6vw, 4rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      color: var(--ink);
+    }
+
+    .wordmark em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .tagline {
+      margin-top: 14px;
+      font-size: 1.05rem;
+      color: var(--ink-light);
+      font-style: italic;
+      letter-spacing: 0.01em;
+    }
+
+    .header-rule {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 36px;
+    }
+    .header-rule::before,
+    .header-rule::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--rule);
+    }
+    .header-rule-ornament {
+      font-size: 1.1rem;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    /* Main card */
+    .card {
+      width: 100%;
+      max-width: 720px;
+      background: var(--parchment);
+      border: 1px solid var(--rule);
+      border-radius: 2px;
+      box-shadow: 0 2px 6px rgba(26,22,16,0.08), 0 12px 40px rgba(26,22,16,0.06);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--rule);
+      background: rgba(255,255,255,0.3);
+    }
+
+    .card-label {
+      font-size: 0.72rem;
+      font-family: 'Lora', serif;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink-light);
+    }
+
+    .kbd-hint {
+      font-size: 0.72rem;
+      color: var(--ink-light);
+      font-style: italic;
+    }
+    .kbd-hint kbd {
+      font-family: 'Lora', serif;
+      font-style: normal;
+      background: rgba(26,22,16,0.08);
+      border: 1px solid var(--rule);
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 0.7rem;
+    }
+
+    /* Textarea */
+    .textarea-wrap {
+      position: relative;
+    }
+
+    textarea {
+      display: block;
+      width: 100%;
+      min-height: 260px;
+      padding: 28px 28px;
+      font-family: 'Lora', Georgia, serif;
+      font-size: 1.05rem;
+      line-height: 1.75;
+      color: var(--ink);
+      background: transparent;
+      border: none;
+      outline: none;
+      resize: vertical;
+      caret-color: var(--accent);
+    }
+
+    textarea::placeholder {
+      color: var(--ink-light);
+      font-style: italic;
+      opacity: 0.7;
+    }
+
+    /* Output section */
+    .output-section {
+      display: none;
+      margin-top: 16px;
+      width: 100%;
+      max-width: 720px;
+      background: var(--parchment);
+      border: 1px solid var(--rule);
+      border-radius: 2px;
+      box-shadow: 0 2px 6px rgba(26,22,16,0.08), 0 12px 40px rgba(26,22,16,0.06);
+      overflow: hidden;
+    }
+    .output-section.visible {
+      display: block;
+    }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      background: rgba(26,22,16,0.03);
+    }
+
+    .output-text {
+      padding: 20px 28px 24px;
+      font-family: 'Lora', Georgia, serif;
+      font-size: 1.05rem;
+      line-height: 1.75;
+      color: var(--ink);
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-family: 'Lora', serif;
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+      border-radius: 2px;
+      padding: 7px 16px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .btn-primary:hover {
+      background: var(--accent-lt);
+      border-color: var(--accent-lt);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--ink-mid);
+      border-color: var(--rule);
+    }
+    .btn-ghost:hover {
+      background: rgba(26,22,16,0.06);
+      border-color: var(--ink-light);
+    }
+
+    /* Action bar */
+    .action-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 24px;
+      border-top: 1px solid var(--rule);
+      background: rgba(255,255,255,0.2);
+    }
+
+    .action-left { display: flex; gap: 10px; }
+
+    /* Status toast */
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      font-style: italic;
+      color: var(--ink-light);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .status.show { opacity: 1; }
+    .status.success { color: #3a7a3a; }
+    .status.error   { color: var(--accent); }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+    }
+
+    /* Stats */
+    .stats {
+      font-size: 0.72rem;
+      color: var(--ink-light);
+      letter-spacing: 0.04em;
+      font-style: italic;
+    }
+
+    /* Comparison view */
+    .comparison {
+      display: none;
+      grid-template-columns: 1fr 1px 1fr;
+      border-top: 1px solid var(--rule);
+    }
+    .comparison.visible { display: grid; }
+
+    .comp-col {
+      padding: 20px 24px;
+    }
+    .comp-divider {
+      background: var(--rule);
+    }
+    .comp-label {
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink-light);
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+    .comp-text {
+      font-family: 'Lora', serif;
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: var(--ink);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Center-screen confirmation popup */
+    .popup-overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 900;
+      pointer-events: none;
+    }
+
+    .popup {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      background: var(--ink);
+      color: var(--cream);
+      padding: 44px 56px;
+      border-radius: 4px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.35), 0 4px 16px rgba(0,0,0,0.2);
+      opacity: 0;
+      transform: scale(0.88);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .popup-overlay.show .popup {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .popup-overlay.hide .popup {
+      opacity: 0;
+      transform: scale(1.05);
+      transition: opacity 0.28s ease, transform 0.28s ease;
+    }
+
+    .popup-check {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: #4caf7d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .popup-check svg {
+      width: 26px;
+      height: 26px;
+      stroke: #fff;
+      stroke-width: 2.5;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .popup-text {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--cream);
+    }
+
+    /* Footer */
+    footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--ink-light);
+      font-style: italic;
+      max-width: 480px;
+      line-height: 1.6;
+    }
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    footer a:hover { text-decoration: underline; }
+
+    /* Dark mode */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --cream:     #16130f;
+        --parchment: #1e1a14;
+        --ink:       #e8e0d0;
+        --ink-mid:   #b0a090;
+        --ink-light: #786858;
+        --accent:    #c45030;
+        --accent-lt: #e06040;
+        --rule:      #332e26;
+        --success-bg: #1a2e1a;
+        --success-fg: #7ec87e;
+      }
+      .card-header { background: rgba(255,255,255,0.03); }
+      .output-header { background: rgba(255,255,255,0.02); }
+      .action-bar { background: rgba(255,255,255,0.02); }
+      .btn-primary { background: var(--accent); border-color: var(--accent); }
+    }
+
+    /* Mobile */
+    @media (max-width: 600px) {
+      header { padding: 36px 0 28px; }
+      .card-header, .action-bar, .output-header { padding: 12px 16px; }
+      textarea, .output-text, .comp-col { padding: 20px 16px; }
+      .kbd-hint { display: none; }
+      .comparison { grid-template-columns: 1fr; }
+      .comp-divider { display: none; }
+      .comp-col:first-child { border-bottom: 1px solid var(--rule); }
+    }
+
+    /* Highlight changed chars in output */
+    .changed { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<div class="top-rule"></div>
+
+<div class="page">
+  <header>
+    <div class="wordmark">Smart <em>Quotes</em></div>
+    <p class="tagline">Typographically correct punctuation, instantly.</p>
+    <div class="header-rule">
+      <span class="header-rule-ornament">❧</span>
+    </div>
+  </header>
+
+  <div class="card" id="card">
+
+    <div class="card-header">
+      <span class="card-label">Input</span>
+      <span class="kbd-hint">Paste with <kbd>⌘V</kbd> for instant conversion</span>
+    </div>
+
+    <div class="textarea-wrap">
+      <textarea
+        id="input"
+        placeholder="Paste or type text with "straight quotes" and it's apostrophes here…"
+        aria-label="Input text for smart quote conversion"
+        spellcheck="true"
+      ></textarea>
+    </div>
+
+    <div class="action-bar">
+      <div class="action-left">
+        <button class="btn btn-primary" id="convertBtn">Convert &amp; Copy</button>
+        <button class="btn btn-ghost" id="clearBtn">Clear</button>
+      </div>
+      <div class="status" id="status" aria-live="polite">
+        <div class="status-dot"></div>
+        <span id="statusMsg"></span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="output-section" id="outputSection">
+    <div class="output-header">
+      <span class="card-label">Output — Smart Quotes</span>
+      <div id="stats" class="stats"></div>
+    </div>
+    <div class="output-text" id="outputText" aria-live="polite"></div>
+  </div>
+
+  <footer>
+    Handles double quotes, single quotes &amp; apostrophes, and nested quotation marks.
+    All processing happens locally — nothing leaves your browser.
+  </footer>
+</div>
+
+<div class="popup-overlay" id="popupOverlay" aria-live="assertive" aria-atomic="true">
+  <div class="popup" id="popup">
+    <div class="popup-check">
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="popup-text">Converted &amp; copied!</div>
+  </div>
+</div>
+
+<script>
+  // ─── Core Conversion Logic ─────────────────────────────────────────────────
+
+  function convertToSmartQuotes(text) {
+    // Normalize line endings
+    text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+    // 1. Apostrophes between letters (contractions & possessives): don't → don't
+    text = text.replace(/([A-Za-z\u00C0-\u024F])'([A-Za-z\u00C0-\u024F])/g, '$1\u2019$2');
+
+    // 2. Decade abbreviations: '80s → '80s
+    text = text.replace(/'(\d{2}s)/g, '\u2019$1');
+
+    // 3. Opening single quotes: after whitespace, start of line, or opening bracket
+    text = text.replace(/(^|[\s(\[{])'(?=\S)/gm, '$1\u2018');
+
+    // 4. Closing single quotes / remaining apostrophes
+    text = text.replace(/'/g, '\u2019');
+
+    // 5. Opening double quotes: after whitespace, start of line, or opening bracket
+    text = text.replace(/(^|[\s(\[{])"(?=\S)/gm, '$1\u201C');
+
+    // 6. Closing double quotes / remaining
+    text = text.replace(/"/g, '\u201D');
+
+    return text;
+  }
+
+  function countChanges(original, converted) {
+    let changes = 0;
+    const oChars = [...original];
+    const cChars = [...converted];
+    const len = Math.min(oChars.length, cChars.length);
+    for (let i = 0; i < len; i++) {
+      if (oChars[i] !== cChars[i]) changes++;
+    }
+    changes += Math.abs(oChars.length - cChars.length);
+    return changes;
+  }
+
+  // ─── UI State ──────────────────────────────────────────────────────────────
+
+  const inputEl     = document.getElementById('input');
+  const outputSec   = document.getElementById('outputSection');
+  const outputText  = document.getElementById('outputText');
+  const statusEl    = document.getElementById('status');
+  const statusMsg   = document.getElementById('statusMsg');
+  const statsEl     = document.getElementById('stats');
+  const convertBtn  = document.getElementById('convertBtn');
+  const clearBtn    = document.getElementById('clearBtn');
+  const popupOverlay = document.getElementById('popupOverlay');
+
+  let statusTimer = null;
+  let popupTimer  = null;
+
+  function showStatus(msg, type = 'success') {
+    statusEl.className = `status show ${type}`;
+    statusMsg.textContent = msg;
+    clearTimeout(statusTimer);
+    statusTimer = setTimeout(() => { statusEl.className = 'status'; }, 3500);
+  }
+
+  function showPopup() {
+    clearTimeout(popupTimer);
+    popupOverlay.classList.remove('hide');
+    popupOverlay.classList.add('show');
+    popupTimer = setTimeout(() => {
+      popupOverlay.classList.remove('show');
+      popupOverlay.classList.add('hide');
+    }, 1600);
+  }
+
+  function renderOutput(original, converted) {
+    if (!converted.trim()) {
+      outputSec.classList.remove('visible');
+      return;
+    }
+
+    // Render output with highlighted changed characters
+    const oChars = [...original];
+    const cChars = [...converted];
+    let html = '';
+    const len = Math.max(oChars.length, cChars.length);
+    for (let i = 0; i < cChars.length; i++) {
+      const ch = cChars[i];
+      const changed = i >= oChars.length || oChars[i] !== ch;
+      if (ch === '\n') {
+        html += '\n';
+      } else if (changed) {
+        html += `<span class="changed">${escapeHtml(ch)}</span>`;
+      } else {
+        html += escapeHtml(ch);
+      }
+    }
+    outputText.innerHTML = html;
+
+    const changes = countChanges(original, converted);
+    const quoteWord = changes === 1 ? 'quote' : 'quotes';
+    statsEl.textContent = changes > 0 ? `${changes} ${quoteWord} corrected` : 'No changes needed';
+
+    outputSec.classList.add('visible');
+  }
+
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  async function processAndCopy(text) {
+    const converted = convertToSmartQuotes(text);
+    renderOutput(text, converted);
+
+    const changes = countChanges(text, converted);
+    if (changes > 0) {
+      try {
+        await navigator.clipboard.writeText(converted);
+        showPopup();
+        showStatus('✓ Converted & copied to clipboard', 'success');
+      } catch (err) {
+        showStatus('Converted — press "Convert & Copy" to copy', 'error');
+      }
+    } else {
+      showStatus('No changes needed', 'error');
+    }
+
+    return converted;
+  }
+
+  // ─── Event Listeners ───────────────────────────────────────────────────────
+
+  // Paste event — fast path
+  document.addEventListener('paste', async (e) => {
+    // Only intercept if we're not focused on the textarea (let normal paste happen there)
+    // Actually: intercept always, transform, put in textarea + clipboard
+    const text = e.clipboardData.getData('text/plain');
+    if (!text) return;
+    e.preventDefault();
+
+    inputEl.value = text;
+    await processAndCopy(text);
+  });
+
+  // Convert button
+  convertBtn.addEventListener('click', async () => {
+    const text = inputEl.value;
+    if (!text.trim()) {
+      showStatus('Nothing to convert yet', 'error');
+      return;
+    }
+    const converted = await processAndCopy(text);
+    inputEl.value = converted; // Replace input with smart-quoted version
+  });
+
+  // Live preview as user types
+  let typeTimer;
+  inputEl.addEventListener('input', () => {
+    clearTimeout(typeTimer);
+    typeTimer = setTimeout(() => {
+      const text = inputEl.value;
+      if (text.trim()) {
+        renderOutput(text, convertToSmartQuotes(text));
+      } else {
+        outputSec.classList.remove('visible');
+      }
+    }, 350);
+  });
+
+  // Clear button
+  clearBtn.addEventListener('click', () => {
+    inputEl.value = '';
+    outputSec.classList.remove('visible');
+    statusEl.className = 'status';
+    statsEl.textContent = '';
+    inputEl.focus();
+  });
+</script>
+
+</body>
+</html>
